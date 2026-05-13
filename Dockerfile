@@ -4,7 +4,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm config set registry https://npm.mirrors.msh.team
-RUN --mount=type=cache,target=/root/.npm \
+RUN --mount=type=cache,id=s/landrealm-npm,target=/root/.npm npm install
     npm ci --prefer-offline --no-audit
 
 FROM deps AS build
