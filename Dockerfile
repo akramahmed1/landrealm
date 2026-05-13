@@ -1,20 +1,17 @@
-FROM node:20-alpine AS base
+FROM node:20-slim
 WORKDIR /app
 
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm config set registry https://npm.mirrors.msh.team
-RUN --mount=type=cache,id=s/landrealm-npm,target=/root/.npm npm install
-    npm ci --prefer-offline --no-audit
+RUN --mount=type=cache,id=s/landrealm-apt,target=/var/cache/apt \
+    apt-get update && \
+    apt-get install -y python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
 
-FROM deps AS build
+COPY package*.json ./
+RUN --mount=type=cache,id=s/landrealm-npm,target=/root/.npm \
+    npm install
+
 COPY . .
 RUN npm run build
-
-FROM node:20-alpine AS production
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY package.json .env ./
 
 EXPOSE 3000
 CMD ["npm", "start"]
